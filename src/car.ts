@@ -1,3 +1,5 @@
+import { Road } from "./road";
+
 export class Car {
   x: number;
   y: number;
@@ -8,12 +10,25 @@ export class Car {
   acceleration: number;
   maxSpeed: number;
   friction: number;
+  angle: number;
+  canvasHeight: number;
+  canvasWidth: number;
 
-  constructor(x: number, y: number, width: number, height: number) {
+  constructor(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    canvasHeight: number,
+    canvasWidth: number
+  ) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
+    this.canvasHeight = canvasHeight;
+    this.canvasWidth = canvasWidth * 0.9;
+    this.angle = 0;
 
     this.speed = 0;
     this.acceleration = 0.2;
@@ -24,17 +39,20 @@ export class Car {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(-this.angle);
     ctx.beginPath();
-    ctx.rect(
-      this.x - this.width / 2,
-      this.y - this.height / 2,
-      this.width,
-      this.height
-    );
+    ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
     ctx.fill();
+    ctx.restore();
   }
 
-  update() {
+  update(roadLeft: number, roadRight: number) {
+    this.#move(roadLeft, roadRight);
+  }
+
+  #move(roadLeft: number, roadRight: number) {
     this.speed > 0
       ? (this.speed -= this.friction)
       : this.speed < 0
@@ -51,14 +69,24 @@ export class Car {
     if (this.controls.reverse) {
       this.speed -= this.acceleration;
     }
-    if (this.controls.left) {
-      this.x -= this.speed;
+    if (this.controls.left && Math.abs(this.speed) > 0) {
+      this.angle += 0.03 * (Math.abs(this.speed) / this.maxSpeed);
     }
-    if (this.controls.right) {
-      this.x += this.speed;
+    if (this.controls.right && Math.abs(this.speed) > 0) {
+      this.angle -= 0.03 * (Math.abs(this.speed) / this.maxSpeed);
     }
 
-    this.y -= this.speed;
+    // center coordinates of the car.
+    this.y -= Math.cos(this.angle) * this.speed;
+    this.y = Math.max(
+      0 + this.height / 2,
+      Math.min(this.y, this.canvasHeight - this.height / 2)
+    );
+    this.x -= Math.sin(this.angle) * this.speed;
+    this.x = Math.max(
+      roadLeft + 0.1 * this.canvasWidth,
+      Math.min(this.x, roadRight - this.width / 2)
+    );
 
     if (this.speed > this.maxSpeed) {
       this.speed = this.maxSpeed;
