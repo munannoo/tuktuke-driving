@@ -1,3 +1,5 @@
+import { lerp } from "./utils.js";
+
 export class Road {
   x: number;
   width: number;
@@ -6,7 +8,7 @@ export class Road {
   right: number;
   top: number;
   bottom: number;
-  //   boundaries: number[];
+  offset: number = 0;
 
   constructor(x: number, width: number, laneCount: number = 3) {
     // x is the center here.
@@ -48,13 +50,9 @@ export class Road {
       }
 
       ctx.beginPath();
-      ctx.moveTo(x, this.top);
-      ctx.lineTo(x, this.bottom);
+      ctx.moveTo(x, this.top + this.offset);
+      ctx.lineTo(x, this.bottom + this.offset);
       ctx.stroke();
     }
   }
-}
-
-function lerp(A: number, B: number, t: number): number {
-  return A + (B - A) * t;
 }

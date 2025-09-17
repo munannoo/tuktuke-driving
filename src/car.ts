@@ -1,4 +1,5 @@
-import { Road } from "./road";
+import { Controls } from "./controls";
+import { Sensor } from "./sensor";
 
 export class Car {
   x: number;
@@ -13,6 +14,7 @@ export class Car {
   angle: number;
   canvasHeight: number;
   canvasWidth: number;
+  sensor: Sensor;
 
   constructor(
     x: number,
@@ -36,20 +38,12 @@ export class Car {
     this.friction = 0.1;
 
     this.controls = new Controls();
-  }
-
-  draw(ctx: CanvasRenderingContext2D) {
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.rotate(-this.angle);
-    ctx.beginPath();
-    ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
-    ctx.fill();
-    ctx.restore();
+    this.sensor = new Sensor(this);
   }
 
   update(roadLeft: number, roadRight: number) {
     this.#move(roadLeft, roadRight);
+    this.sensor.update();
   }
 
   #move(roadLeft: number, roadRight: number) {
@@ -63,6 +57,7 @@ export class Car {
       this.speed = 0;
     }
 
+    // movement of the car based on the controls
     if (this.controls.forward) {
       this.speed += this.acceleration;
     }
@@ -77,17 +72,20 @@ export class Car {
     }
 
     // center coordinates of the car.
-    this.y -= Math.cos(this.angle) * this.speed;
-    this.y = Math.max(
-      0 + this.height / 2,
-      Math.min(this.y, this.canvasHeight - this.height / 2)
-    );
+
+    // this.y -= Math.cos(this.angle) * this.speed * 0.05;
+    // this.y = Math.max(
+    //   0 + this.height / 2,
+    //   Math.min(this.y, this.canvasHeight - this.height / 2)
+    // );
+
     this.x -= Math.sin(this.angle) * this.speed;
     this.x = Math.max(
       roadLeft + 0.1 * this.canvasWidth,
       Math.min(this.x, roadRight - this.width / 2)
     );
 
+    // managing car physics
     if (this.speed > this.maxSpeed) {
       this.speed = this.maxSpeed;
     }
@@ -95,56 +93,18 @@ export class Car {
       this.speed = -this.maxSpeed;
     }
   }
-}
 
-class Controls {
-  forward: boolean;
-  left: boolean;
-  right: boolean;
-  reverse: boolean;
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(-this.angle);
 
-  constructor() {
-    this.forward = false;
-    this.left = false;
-    this.right = false;
-    this.reverse = false;
+    ctx.beginPath();
+    ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
+    ctx.fill();
 
-    this.#addKeyboardListeners();
-  }
+    ctx.restore();
 
-  #addKeyboardListeners() {
-    document.onkeydown = (event) => {
-      switch (event.key) {
-        case "ArrowLeft":
-          this.left = true;
-          break;
-        case "ArrowRight":
-          this.right = true;
-          break;
-        case "ArrowUp":
-          this.forward = true;
-          break;
-        case "ArrowDown":
-          this.reverse = true;
-          break;
-      }
-      console.table(this);
-    };
-    document.onkeyup = (event) => {
-      switch (event.key) {
-        case "ArrowLeft":
-          this.left = false;
-          break;
-        case "ArrowRight":
-          this.right = false;
-          break;
-        case "ArrowUp":
-          this.forward = false;
-          break;
-        case "ArrowDown":
-          this.reverse = false;
-          break;
-      }
-    };
+    this.sensor.draw(ctx);
   }
 }
