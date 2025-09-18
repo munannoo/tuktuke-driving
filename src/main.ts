@@ -24,7 +24,7 @@ function animate() {
 
     road.offset += car.speed;
 
-    car.update(road.left, road.right);
+    car.update(road.left, road.right, road.borders);
 
     road.draw(ctx);
     car.draw(ctx);

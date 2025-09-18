@@ -1,5 +1,6 @@
 import { Controls } from "./controls";
 import { Sensor } from "./sensor";
+import { type RoadBorders } from "./road.js";
 
 export class Car {
   x: number;
@@ -41,9 +42,9 @@ export class Car {
     this.sensor = new Sensor(this);
   }
 
-  update(roadLeft: number, roadRight: number) {
+  update(roadLeft: number, roadRight: number, borders: RoadBorders) {
     this.#move(roadLeft, roadRight);
-    this.sensor.update();
+    this.sensor.update(borders);
   }
 
   #move(roadLeft: number, roadRight: number) {

@@ -1,4 +1,12 @@
 import { lerp } from "./utils.js";
+import type { Point } from "./utils.js";
+
+export type RoadBorders = {
+  topLeft: Point;
+  bottomLeft: Point;
+  topRight: Point;
+  bottomRight: Point;
+};
 
 export class Road {
   x: number;
@@ -9,6 +17,7 @@ export class Road {
   top: number;
   bottom: number;
   offset: number = 0;
+  borders: RoadBorders;
 
   constructor(x: number, width: number, laneCount: number = 3) {
     // x is the center here.
@@ -23,8 +32,12 @@ export class Road {
     const infinity = 1000000;
     this.top = -infinity;
     this.bottom = infinity;
-
-    // this.boundaries = [0, this.right, this.canvasHeight, this.left];
+    this.borders = {
+      topLeft: { x: this.left, y: this.top },
+      bottomLeft: { x: this.left, y: this.bottom },
+      topRight: { x: this.right, y: this.top },
+      bottomRight: { x: this.right, y: this.bottom },
+    };
   }
 
   getLaneCenter(laneIndex: number) {
@@ -38,7 +51,7 @@ export class Road {
 
   draw(ctx: CanvasRenderingContext2D) {
     ctx.lineWidth = 5;
-    ctx.strokeStyle = "grey";
+    ctx.strokeStyle = "whitesmoke";
 
     for (let i = 0; i <= this.laneCount; i++) {
       const x = lerp(this.left, this.right, i / this.laneCount);
