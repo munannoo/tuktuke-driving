@@ -1,7 +1,7 @@
 import { lerp } from "./utils.js";
 import type { Point } from "./utils.js";
 
-export type RoadBorders = {
+export type BorderCoordinates = {
   topLeft: Point;
   bottomLeft: Point;
   topRight: Point;
@@ -17,7 +17,7 @@ export class Road {
   top: number;
   bottom: number;
   offset: number = 0;
-  borders: RoadBorders;
+  borders: BorderCoordinates;
 
   constructor(x: number, width: number, laneCount: number = 3) {
     // x is the center here.

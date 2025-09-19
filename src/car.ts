@@ -1,6 +1,6 @@
 import { Controls } from "./controls";
 import { Sensor } from "./sensor";
-import { type RoadBorders } from "./road.js";
+import { type BorderCoordinates } from "./road.js";
 
 export class Car {
   x: number;
@@ -16,6 +16,7 @@ export class Car {
   canvasHeight: number;
   canvasWidth: number;
   sensor: Sensor;
+  carBorders: BorderCoordinates;
 
   constructor(
     x: number,
@@ -40,9 +41,16 @@ export class Car {
 
     this.controls = new Controls();
     this.sensor = new Sensor(this);
+
+    this.carBorders = {
+      topLeft: { x: this.x - this.width / 2, y: this.y - this.height / 2 },
+      bottomLeft: { x: this.x - this.width / 2, y: this.y + this.height / 2 },
+      topRight: { x: this.x + this.width / 2, y: this.y - this.height / 2 },
+      bottomRight: { x: this.x + this.width / 2, y: this.y + this.height / 2 },
+    };
   }
 
-  update(roadLeft: number, roadRight: number, borders: RoadBorders) {
+  update(roadLeft: number, roadRight: number, borders: BorderCoordinates) {
     this.#move(roadLeft, roadRight);
     this.sensor.update(borders);
   }

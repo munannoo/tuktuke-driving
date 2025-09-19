@@ -1,5 +1,5 @@
 import type { Car } from "./car.js";
-import type { RoadBorders } from "./road.js";
+import type { BorderCoordinates } from "./road.js";
 import { lerp, getInterSection } from "./utils.js";
 import type { Point } from "./utils.js";
 
@@ -21,17 +21,17 @@ export class Sensor {
   constructor(car: Car) {
     this.car = car;
     this.rayCount = 4;
-    this.rayLength = 150;
+    this.rayLength = 100;
     this.raySpread = Math.PI / 2;
 
     this.rays = [];
   }
 
-  update(roadBorders: RoadBorders) {
+  update(roadBorders: BorderCoordinates) {
     this.#castRays(roadBorders);
   }
 
-  #castRays(roadBorders: RoadBorders) {
+  #castRays(roadBorders: BorderCoordinates) {
     // update rays according to the car's position
 
     this.rays = [];
