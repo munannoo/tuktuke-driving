@@ -1,6 +1,7 @@
 import { Controls } from "./controls";
 import { Sensor } from "./sensor";
 import { type BorderCoordinates } from "./road.js";
+import { getInterSection, polyIntersect } from "./utils.js";
 
 export class Car {
   x: number;
@@ -17,6 +18,7 @@ export class Car {
   canvasWidth: number;
   sensor: Sensor;
   carBorders: BorderCoordinates;
+  damage: boolean;
 
   constructor(
     x: number,
@@ -33,6 +35,7 @@ export class Car {
     this.canvasHeight = canvasHeight;
     this.canvasWidth = canvasWidth * 0.9;
     this.angle = 0;
+    this.damage = false;
 
     this.speed = 0;
     this.acceleration = 0.2;
@@ -53,6 +56,37 @@ export class Car {
   update(roadLeft: number, roadRight: number, borders: BorderCoordinates) {
     this.#move(roadLeft, roadRight);
     this.sensor.update(borders);
+    this.carBorders = this.#getCurrentBorders();
+    this.damage = this.#assessDamage(this.carBorders, borders);
+  }
+
+  #assessDamage(
+    carBorders: BorderCoordinates,
+    roadBorders: BorderCoordinates
+  ): boolean {
+    if (polyIntersect(carBorders, roadBorders)) {
+      return true;
+    }
+    return false;
+  }
+
+  #getCurrentBorders(): BorderCoordinates {
+    const cosAngle = Math.cos(-this.angle); // Matching my draw() rotation sign
+    const sinAngle = Math.sin(-this.angle);
+
+    const rotate = (lx: number, ly: number) => {
+      return {
+        x: this.x + (lx * cosAngle - ly * sinAngle),
+        y: this.y + (lx * sinAngle + ly * cosAngle),
+      };
+    };
+
+    return {
+      topLeft: rotate(-this.width / 2, -this.height / 2),
+      topRight: rotate(this.width / 2, -this.height / 2),
+      bottomLeft: rotate(-this.width / 2, this.height / 2),
+      bottomRight: rotate(this.width / 2, this.height / 2),
+    };
   }
 
   #move(roadLeft: number, roadRight: number) {
@@ -110,8 +144,13 @@ export class Car {
 
     ctx.beginPath();
     ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
-    ctx.fill();
 
+    if (this.damage) {
+      ctx.fillStyle = "orange";
+    } else {
+      ctx.fillStyle = "black";
+    }
+    ctx.fill();
     ctx.restore();
 
     this.sensor.draw(ctx);
