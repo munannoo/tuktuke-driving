@@ -1,14 +1,14 @@
 import { Controls } from "./controls";
 import { Sensor } from "./sensor";
 import { type BorderCoordinates } from "./road.js";
-import { getInterSection, polyIntersect } from "./utils.js";
+import { polyIntersect } from "./utils.js";
 
 export class Car {
   x: number;
   y: number;
   width: number;
   height: number;
-  controls: Controls;
+  controls?: Controls;
   speed: number;
   acceleration: number;
   maxSpeed: number;
@@ -16,9 +16,10 @@ export class Car {
   angle: number;
   canvasHeight: number;
   canvasWidth: number;
-  sensor: Sensor;
+  sensor?: Sensor;
   carBorders: BorderCoordinates;
   damage: boolean;
+  dummyCar: boolean;
 
   constructor(
     x: number,
@@ -26,8 +27,11 @@ export class Car {
     width: number,
     height: number,
     canvasHeight: number,
-    canvasWidth: number
+    canvasWidth: number,
+    maxSpeed: number = 4,
+    dummyCar: boolean = false
   ) {
+    this.dummyCar = dummyCar;
     this.x = x;
     this.y = y;
     this.width = width;
@@ -39,11 +43,13 @@ export class Car {
 
     this.speed = 0;
     this.acceleration = 0.2;
-    this.maxSpeed = 4;
+    this.maxSpeed = maxSpeed;
     this.friction = 0.1;
 
-    this.controls = new Controls();
-    this.sensor = new Sensor(this);
+    if (!this.dummyCar) {
+      this.controls = new Controls();
+      this.sensor = new Sensor(this);
+    }
 
     this.carBorders = {
       topLeft: { x: this.x - this.width / 2, y: this.y - this.height / 2 },
@@ -53,20 +59,38 @@ export class Car {
     };
   }
 
-  update(roadLeft: number, roadRight: number, borders: BorderCoordinates) {
-    this.#move(roadLeft, roadRight);
-    this.sensor.update(borders);
-    this.carBorders = this.#getCurrentBorders();
-    this.damage = this.#assessDamage(this.carBorders, borders);
+  update(borders: BorderCoordinates, traffic?: Car[]) {
+    if (!this.damage) {
+      if (!this.dummyCar && this.sensor) {
+        this.sensor.update(borders, traffic);
+      }
+      this.#move();
+      this.carBorders = this.#getCurrentBorders();
+      this.damage = this.#assessDamage(this.carBorders, borders, traffic);
+    } else {
+      this.speed = 0;
+    }
   }
 
   #assessDamage(
     carBorders: BorderCoordinates,
-    roadBorders: BorderCoordinates
+    roadBorders: BorderCoordinates,
+    trafficCars: Car[] | undefined
   ): boolean {
+    // for road collision
     if (polyIntersect(carBorders, roadBorders)) {
       return true;
     }
+
+    // for traffic collision
+    if (trafficCars) {
+      for (let i = 0; i < trafficCars.length; i++) {
+        if (polyIntersect(carBorders, trafficCars[i].carBorders)) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }
 
@@ -89,7 +113,7 @@ export class Car {
     };
   }
 
-  #move(roadLeft: number, roadRight: number) {
+  #move() {
     this.speed > 0
       ? (this.speed -= this.friction)
       : this.speed < 0
@@ -101,32 +125,28 @@ export class Car {
     }
 
     // movement of the car based on the controls
-    if (this.controls.forward) {
+    if (this.controls) {
+      if (this.controls.forward) {
+        this.speed += this.acceleration;
+      }
+      if (this.controls.reverse) {
+        this.speed -= this.acceleration;
+      }
+      if (this.controls.left && Math.abs(this.speed) > 0) {
+        this.angle += 0.03 * (Math.abs(this.speed) / this.maxSpeed);
+      }
+      if (this.controls.right && Math.abs(this.speed) > 0) {
+        this.angle -= 0.03 * (Math.abs(this.speed) / this.maxSpeed);
+      }
+    } else {
       this.speed += this.acceleration;
-    }
-    if (this.controls.reverse) {
-      this.speed -= this.acceleration;
-    }
-    if (this.controls.left && Math.abs(this.speed) > 0) {
-      this.angle += 0.03 * (Math.abs(this.speed) / this.maxSpeed);
-    }
-    if (this.controls.right && Math.abs(this.speed) > 0) {
-      this.angle -= 0.03 * (Math.abs(this.speed) / this.maxSpeed);
     }
 
     // center coordinates of the car.
 
-    // this.y -= Math.cos(this.angle) * this.speed * 0.05;
-    // this.y = Math.max(
-    //   0 + this.height / 2,
-    //   Math.min(this.y, this.canvasHeight - this.height / 2)
-    // );
+    this.y -= Math.cos(this.angle) * this.speed;
 
     this.x -= Math.sin(this.angle) * this.speed;
-    this.x = Math.max(
-      roadLeft + 0.1 * this.canvasWidth,
-      Math.min(this.x, roadRight - this.width / 2)
-    );
 
     // managing car physics
     if (this.speed > this.maxSpeed) {
@@ -148,11 +168,13 @@ export class Car {
     if (this.damage) {
       ctx.fillStyle = "orange";
     } else {
-      ctx.fillStyle = "black";
+      ctx.fillStyle = !this.dummyCar ? "red" : "blue";
     }
     ctx.fill();
     ctx.restore();
 
-    this.sensor.draw(ctx);
+    if (!this.dummyCar && this.sensor) {
+      this.sensor.draw(ctx);
+    }
   }
 }

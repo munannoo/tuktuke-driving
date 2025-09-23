@@ -27,11 +27,11 @@ export class Sensor {
     this.rays = [];
   }
 
-  update(roadBorders: BorderCoordinates) {
-    this.#castRays(roadBorders);
+  update(roadBorders: BorderCoordinates, traffic: Car[] | undefined) {
+    this.#castRays(traffic, roadBorders);
   }
 
-  #castRays(roadBorders: BorderCoordinates) {
+  #castRays(traffic: Car[] | undefined, roadBorders: BorderCoordinates) {
     // update rays according to the car's position
 
     this.rays = [];
@@ -50,6 +50,9 @@ export class Sensor {
         y: -Math.cos(rayAngle) * this.rayLength + this.car.y,
       };
 
+      let intersection: Intersection | null = null;
+
+      // for road border detection
       const leftHit = getInterSection(
         start,
         end,
@@ -64,7 +67,6 @@ export class Sensor {
         roadBorders.bottomRight
       );
 
-      let intersection: Intersection | null = null;
       if (leftHit && rightHit) {
         if (leftHit.offset && rightHit.offset) {
           if (leftHit.offset < rightHit.offset) {
@@ -77,6 +79,39 @@ export class Sensor {
         intersection = leftHit;
       } else if (rightHit) {
         intersection = rightHit;
+      }
+
+      // for traffic detection
+      if (traffic) {
+        for (let j = 0; j < traffic.length; j++) {
+          // got the car arr here. now time to get car and its sides
+          const carCoordinates = traffic[j].carBorders;
+          const carSides: Point[] = [
+            carCoordinates.topLeft,
+            carCoordinates.topRight,
+            carCoordinates.bottomRight,
+            carCoordinates.bottomLeft,
+          ];
+          // got car and its points now to mke them sides and throw into the getintersection function.
+
+          for (let k = 0; k < carSides.length; k++) {
+            if (
+              getInterSection(
+                start,
+                end,
+                carSides[k],
+                carSides[(k + 1) % carSides.length]
+              )
+            ) {
+              intersection = getInterSection(
+                start,
+                end,
+                carSides[k],
+                carSides[(k + 1) % carSides.length]
+              );
+            }
+          }
+        }
       }
 
       this.rays.push([start, end, intersection]);
