@@ -14,7 +14,9 @@ const car = new Car(
   30,
   50,
   canvas.height,
-  canvas.width
+  canvas.width,
+  false,
+  true
 );
 const traffic = [
   new Car(
@@ -24,8 +26,9 @@ const traffic = [
     50,
     canvas.height,
     canvas.width,
-    2,
-    true
+    true,
+    false,
+    2
   ),
 ];
 

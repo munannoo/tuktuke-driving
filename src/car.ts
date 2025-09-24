@@ -1,5 +1,6 @@
 import { Controls } from "./controls";
 import { Sensor } from "./sensor";
+import { NeuralNetwork } from "./neural-network/network.js";
 import { type BorderCoordinates } from "./road.js";
 import { polyIntersect } from "./utils.js";
 
@@ -20,6 +21,8 @@ export class Car {
   carBorders: BorderCoordinates;
   damage: boolean;
   dummyCar: boolean;
+  brain?: NeuralNetwork;
+  aiCar: boolean;
 
   constructor(
     x: number,
@@ -28,10 +31,13 @@ export class Car {
     height: number,
     canvasHeight: number,
     canvasWidth: number,
-    maxSpeed: number = 4,
-    dummyCar: boolean = false
+    dummyCar: boolean = false,
+    aiCar: boolean = false,
+    maxSpeed: number = 4
   ) {
     this.dummyCar = dummyCar;
+    this.aiCar = aiCar;
+
     this.x = x;
     this.y = y;
     this.width = width;
@@ -49,6 +55,9 @@ export class Car {
     if (!this.dummyCar) {
       this.controls = new Controls();
       this.sensor = new Sensor(this);
+      if (this.aiCar) {
+        this.brain = new NeuralNetwork([this.sensor.rayCount, 4]);
+      }
     }
 
     this.carBorders = {
@@ -63,6 +72,19 @@ export class Car {
     if (!this.damage) {
       if (!this.dummyCar && this.sensor) {
         this.sensor.update(borders, traffic);
+
+        if (this.brain && this.controls) {
+          const inputs = this.sensor.offsets.map((offset) => {
+            return offset ? 1 - offset : 0;
+          });
+
+          const outputs = NeuralNetwork.feedForward(inputs, this.brain);
+
+          this.controls.forward = outputs[0] > 0;
+          this.controls.left = outputs[1] > 0;
+          this.controls.right = outputs[2] > 0;
+          this.controls.reverse = outputs[3] > 0;
+        }
       }
       this.#move();
       this.carBorders = this.#getCurrentBorders();

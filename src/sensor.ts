@@ -17,6 +17,7 @@ export class Sensor {
   raySpread: number;
   rays: Ray[];
   car: Car;
+  offsets: Array<number | null>;
 
   constructor(car: Car) {
     this.car = car;
@@ -25,6 +26,7 @@ export class Sensor {
     this.raySpread = Math.PI / 2;
 
     this.rays = [];
+    this.offsets = [];
   }
 
   update(roadBorders: BorderCoordinates, traffic: Car[] | undefined) {
@@ -35,6 +37,7 @@ export class Sensor {
     // update rays according to the car's position
 
     this.rays = [];
+    this.offsets = [];
 
     for (let i = 0; i < this.rayCount; i++) {
       const rayAngle =
@@ -115,6 +118,7 @@ export class Sensor {
       }
 
       this.rays.push([start, end, intersection]);
+      this.offsets.push(intersection ? intersection.offset : null);
     }
   }
 
