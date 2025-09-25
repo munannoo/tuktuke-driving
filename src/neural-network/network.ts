@@ -1,10 +1,10 @@
 export class NeuralNetwork {
   levels: Level[];
 
-  constructor(nuerons: number[]) {
+  constructor(neurons: number[]) {
     this.levels = [];
-    for (let i = 0; i < nuerons.length - 1; i++) {
-      this.levels.push(new Level(nuerons[i], nuerons[i + 1]));
+    for (let i = 0; i < neurons.length - 1; i++) {
+      this.levels.push(new Level(neurons[i], neurons[i + 1]));
     }
   }
 
@@ -17,7 +17,7 @@ export class NeuralNetwork {
   }
 }
 
-class Level {
+export class Level {
   inputs: number[];
   outputs: number[];
   biases: number[];
@@ -52,13 +52,12 @@ class Level {
       level.inputs[i] = givenInputs[i];
     }
 
-    // we need to find the weighted sums essentially input1 * wt1 + inputN * wtN
     for (let i = 0; i < level.outputs.length; i++) {
-      let sum = level.biases[i];
+      let sum = 0;
       for (let j = 0; j < level.inputs.length; j++) {
         sum += level.inputs[j] * level.weights[j][i];
       }
-      level.outputs[i] = Math.tanh(sum);
+      level.outputs[i] = sum > level.biases[i] ? 1 : 0;
     }
 
     return level.outputs;

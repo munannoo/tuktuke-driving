@@ -55,9 +55,7 @@ export class Car {
     if (!this.dummyCar) {
       this.controls = new Controls();
       this.sensor = new Sensor(this);
-      if (this.aiCar) {
-        this.brain = new NeuralNetwork([this.sensor.rayCount, 4]);
-      }
+      this.brain = new NeuralNetwork([this.sensor.rayCount, 6, 4]);
     }
 
     this.carBorders = {
@@ -80,10 +78,12 @@ export class Car {
 
           const outputs = NeuralNetwork.feedForward(inputs, this.brain);
 
-          this.controls.forward = outputs[0] > 0;
-          this.controls.left = outputs[1] > 0;
-          this.controls.right = outputs[2] > 0;
-          this.controls.reverse = outputs[3] > 0;
+          if (this.aiCar) {
+            this.controls.forward = outputs[0] > 0;
+            this.controls.left = outputs[1] > 0;
+            this.controls.right = outputs[2] > 0;
+            this.controls.reverse = outputs[3] > 0;
+          }
         }
       }
       this.#move();

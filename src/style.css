@@ -24,7 +24,7 @@ a:hover {
 body {
   margin: 0;
   padding: 0;
-  height: 100vh;
+  height: calc(100vh - 2px);
   width: 100%;
   display: flex;
   align-items: center;
@@ -63,9 +63,17 @@ button:focus-visible {
   }
 }
 
-canvas {
+#workingCanvas {
   border: 1px solid #ccc;
   background-color: gray;
-  /* width: 50%; */
+  /* width: 40%; */
   height: 100%;
+}
+
+#networkCanvas {
+  margin-left: 10px;
+  border: 2px solid yellow;
+  background-color: black;
+  width: 50%;
+  height: 50%;
 }
