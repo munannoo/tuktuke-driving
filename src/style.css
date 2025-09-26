@@ -71,9 +71,18 @@ button:focus-visible {
 }
 
 #networkCanvas {
-  margin-left: 10px;
   border: 2px solid yellow;
   background-color: black;
   width: 50%;
   height: 50%;
+}
+
+#verticalBtn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  justify-content: center;
+  background-color: gray;
+  padding: 5px;
 }

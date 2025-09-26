@@ -15,8 +15,6 @@ export class Car {
   maxSpeed: number;
   friction: number;
   angle: number;
-  canvasHeight: number;
-  canvasWidth: number;
   sensor?: Sensor;
   carBorders: BorderCoordinates;
   damage: boolean;
@@ -29,8 +27,6 @@ export class Car {
     y: number,
     width: number,
     height: number,
-    canvasHeight: number,
-    canvasWidth: number,
     dummyCar: boolean = false,
     aiCar: boolean = false,
     maxSpeed: number = 4
@@ -42,8 +38,6 @@ export class Car {
     this.y = y;
     this.width = width;
     this.height = height;
-    this.canvasHeight = canvasHeight;
-    this.canvasWidth = canvasWidth * 0.9;
     this.angle = 0;
     this.damage = false;
 
@@ -179,7 +173,7 @@ export class Car {
     }
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, drawSensor: boolean = false) {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(-this.angle);
@@ -195,7 +189,7 @@ export class Car {
     ctx.fill();
     ctx.restore();
 
-    if (!this.dummyCar && this.sensor) {
+    if (!this.dummyCar && this.sensor && drawSensor) {
       this.sensor.draw(ctx);
     }
   }

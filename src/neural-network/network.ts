@@ -1,3 +1,5 @@
+import { lerp } from "../utils";
+
 export class NeuralNetwork {
   levels: Level[];
 
@@ -14,6 +16,28 @@ export class NeuralNetwork {
       currentInputs = Level.feedForward(currentInputs, network.levels[i]);
     }
     return currentInputs;
+  }
+
+  static mutate(network: NeuralNetwork, amount = 1) {
+    network.levels.forEach((element) => {
+      for (let i = 0; i < element.biases.length; i++) {
+        element.biases[i] = lerp(
+          element.biases[i],
+          Math.random() * 2 - 1,
+          amount
+        );
+      }
+
+      for (let i = 0; i < element.weights.length; i++) {
+        for (let j = 0; j < element.weights[i].length; j++) {
+          element.weights[i][j] = lerp(
+            element.weights[i][j],
+            Math.random() * 2 - 1,
+            amount
+          );
+        }
+      }
+    });
   }
 }
 
