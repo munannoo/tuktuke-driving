@@ -21,6 +21,7 @@ export class Car {
   dummyCar: boolean;
   brain?: NeuralNetwork;
   aiCar: boolean;
+  color: string; // Add color property
 
   constructor(
     x: number,
@@ -45,6 +46,8 @@ export class Car {
     this.acceleration = 0.2;
     this.maxSpeed = maxSpeed;
     this.friction = 0.1;
+
+    this.color = !this.dummyCar ? "red" : "blue"; // Initialize color
 
     if (!this.dummyCar) {
       this.controls = new Controls();
@@ -174,23 +177,61 @@ export class Car {
   }
 
   draw(ctx: CanvasRenderingContext2D, drawSensor: boolean = false) {
+    if (this.damage) {
+      ctx.fillStyle = "gray";
+    } else {
+      ctx.fillStyle = this.color;
+    }
+
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(-this.angle);
 
+    // Car body (rounded rectangle)
     ctx.beginPath();
-    ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
-
-    if (this.damage) {
-      ctx.fillStyle = "orange";
-    } else {
-      ctx.fillStyle = !this.dummyCar ? "red" : "blue";
-    }
+    ctx.roundRect(
+      -this.width / 2,
+      -this.height / 2,
+      this.width,
+      this.height,
+      5
+    );
     ctx.fill();
+
+    // Windows (darker blue rectangles)
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+
+    // Front windshield
+    ctx.fillRect(
+      -this.width / 2 + 5,
+      -this.height / 2 + 6,
+      this.width - 10,
+      12
+    );
+
+    // Rear window
+    ctx.fillRect(-this.width / 2 + 5, this.height / 2 - 10, this.width - 10, 6);
+
+    //Side windows
+    ctx.fillRect(-this.width + 18, this.height / 2 - 30, 2, 18);
+    ctx.fillRect(this.width - 20, this.height / 2 - 30, 2, 18);
+
+    // Side mirrors
+    ctx.fillStyle = this.color;
+    ctx.fillRect(-this.width + 12, this.height / 2 - 40, this.width - 25, 2);
+    ctx.fillRect(this.width - 17, this.height / 2 - 40, this.width - 25, 2);
+
+    // Headlights (white circles)
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(-this.width / 2 + 5, -this.height / 2 + 2, 3, 0, Math.PI * 2);
+    ctx.arc(this.width / 2 - 5, -this.height / 2 + 2, 3, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
 
-    if (!this.dummyCar && this.sensor && drawSensor) {
-      this.sensor.draw(ctx);
+    if (!this.dummyCar && drawSensor) {
+      this.sensor?.draw(ctx);
     }
   }
 }
