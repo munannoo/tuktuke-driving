@@ -1,5 +1,7 @@
 # Self-Driving Car AI with Neural Networks 🚗🧠
 
+![Demo GIF](./public/cargif.gif)
+
 This is my complete self-driving car simulation built from scratch using TypeScript. I developed neural networks that learn to navigate traffic, avoid obstacles, and become expert drivers through evolutionary algorithms!
 
 ## 🎯 What I Did In The Project
