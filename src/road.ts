@@ -18,6 +18,8 @@ export class Road {
   bottom: number;
   offset: number = 0;
   borders: BorderCoordinates;
+  lanePos: number[];
+  laneWidth: number;
 
   constructor(x: number, width: number, laneCount: number = 3) {
     // x is the center here.
@@ -38,14 +40,19 @@ export class Road {
       topRight: { x: this.right, y: this.top },
       bottomRight: { x: this.right, y: this.bottom },
     };
+    this.laneWidth = this.width / this.laneCount;
+    this.lanePos = [
+      this.left,
+      this.left + this.laneWidth,
+      this.left + this.laneWidth * 2,
+    ];
   }
 
   getLaneCenter(laneIndex: number) {
-    const laneWidth = this.width / this.laneCount;
     return (
       this.left +
-      laneWidth / 2 +
-      Math.min(laneIndex, this.laneCount - 1) * laneWidth
+      this.laneWidth / 2 +
+      Math.min(laneIndex, this.laneCount - 1) * this.laneWidth
     );
   }
 

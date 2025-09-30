@@ -156,8 +156,8 @@ export class Visualizer {
 
 function getRGBA(value: number) {
   const alpha = Math.abs(value);
-  const r = value < 0 ? 0 : 255;
-  const g = value > 0 ? 0 : 255;
+  const r = value > 0 ? 0 : 255;
+  const g = value < 0 ? 0 : 255;
   const b = 0;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

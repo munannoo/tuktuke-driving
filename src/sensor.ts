@@ -123,8 +123,18 @@ export class Sensor {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    // Safety check to ensure rays are initialized
+    if (!this.rays || this.rays.length === 0) {
+      return;
+    }
+
     for (let i = 0; i < this.rayCount; i++) {
       const ray = this.rays[i];
+
+      // Additional safety check for individual ray
+      if (!ray || !ray[0] || !ray[1]) {
+        continue;
+      }
 
       ctx.beginPath();
       ctx.strokeStyle = "yellow";

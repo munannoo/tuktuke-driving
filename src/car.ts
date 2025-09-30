@@ -1,8 +1,8 @@
 import { Controls } from "./controls";
 import { Sensor } from "./sensor";
 import { NeuralNetwork } from "./neural-network/network.js";
-import { type BorderCoordinates } from "./road.js";
-import { polyIntersect } from "./utils.js";
+import { Road, type BorderCoordinates } from "./road.js";
+import { lerp, polyIntersect } from "./utils.js";
 
 export class Car {
   x: number;
@@ -21,10 +21,16 @@ export class Car {
   dummyCar: boolean;
   brain?: NeuralNetwork;
   aiCar: boolean;
-  color: string; // Add color property
+  color: string;
+  doubleInputs: number;
+  turn: number;
+  timeAlive: number;
+  overTake: number;
+  laneChange: number;
+  lane: number;
 
   constructor(
-    x: number,
+    xValue: number[],
     y: number,
     width: number,
     height: number,
@@ -35,7 +41,7 @@ export class Car {
     this.dummyCar = dummyCar;
     this.aiCar = aiCar;
 
-    this.x = x;
+    this.x = xValue[0];
     this.y = y;
     this.width = width;
     this.height = height;
@@ -46,6 +52,13 @@ export class Car {
     this.acceleration = 0.2;
     this.maxSpeed = maxSpeed;
     this.friction = 0.1;
+
+    this.doubleInputs = 0;
+    this.turn = 0;
+    this.timeAlive = 0;
+    this.overTake = 0;
+    this.lane = xValue[1];
+    this.laneChange = 0;
 
     this.color = !this.dummyCar ? "red" : "blue"; // Initialize color
 
@@ -63,10 +76,10 @@ export class Car {
     };
   }
 
-  update(borders: BorderCoordinates, traffic?: Car[]) {
+  update(road: Road, traffic?: Car[], trafficPos?: number[], time?: number) {
     if (!this.damage) {
       if (!this.dummyCar && this.sensor) {
-        this.sensor.update(borders, traffic);
+        this.sensor.update(road.borders, traffic);
 
         if (this.brain && this.controls) {
           const inputs = this.sensor.offsets.map((offset) => {
@@ -82,13 +95,61 @@ export class Car {
             this.controls.reverse = outputs[3] > 0;
           }
         }
+        this.#assessCarBehaviors(trafficPos as number[], time as number, road);
       }
       this.#move();
       this.carBorders = this.#getCurrentBorders();
-      this.damage = this.#assessDamage(this.carBorders, borders, traffic);
+      this.damage = this.#assessDamage(this.carBorders, road.borders, traffic);
     } else {
       this.speed = 0;
     }
+  }
+
+  #assessCarBehaviors(trafficPos: number[], time: number, road: Road) {
+    this.timeAlive += time;
+
+    if (
+      (this.controls?.forward && this.controls.reverse) ||
+      (this.controls?.left && this.controls.right)
+    ) {
+      this.doubleInputs += 1;
+    }
+
+    const sensorWithOffset = this.sensor?.offsets.filter(
+      (value) => value !== null
+    );
+    if (sensorWithOffset) {
+      if (Math.min(...sensorWithOffset) < 0.3 && this.angle > 0) {
+        this.turn += 1;
+      }
+    }
+
+    for (let i = 0; i < trafficPos.length; i++) {
+      if (this.y > trafficPos[i]) {
+        this.overTake += 1;
+      }
+    }
+
+    const changedLane = this.#checkLane(this.x, road.lanePos);
+    if (this.lane !== changedLane) {
+      this.laneChange += 1;
+      this.lane = changedLane;
+    }
+  }
+
+  #checkLane(carX: number, laneValues: number[]): number {
+    for (let i = 0; i < laneValues.length - 1; i++) {
+      if (carX > laneValues[i] && carX < laneValues[i + 1]) {
+        return i;
+      }
+    }
+
+    // for last lane....
+    if (carX > laneValues[laneValues.length - 1]) {
+      return laneValues.length - 1;
+    }
+
+    return this.lane;
   }
 
   #assessDamage(

@@ -18,28 +18,35 @@ const networkCtx = networkCanvas.getContext("2d");
 
 const road = new Road(canvas.width / 2, canvas.width * 0.9, 3);
 const traffic = [
-  new Car(road.getLaneCenter(1), -200, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(2), -200, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(0), -500, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(2), -600, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(0), -800, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(1), -800, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(2), -900, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(0), -1000, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(1), -1000, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(0), -1200, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(2), -1200, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(1), 1], -200, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(0), 0], -500, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(2), 2], -500, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(2), 2], -600, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(0), 0], -800, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(1), 1], -800, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(2), 2], -900, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(0), 0], -1000, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(1), 1], -1000, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(0), 0], -1200, 30, 50, true, false, 2),
+  new Car([road.getLaneCenter(2), 2], -1200, 30, 50, true, false, 2),
 ];
 
+let trafficPos: number[] = [];
 let cars: Car[] = [];
-let bestCars: Car[] = [];
-const N = 100;
+const N = 300;
 
 function getCars(N: number) {
   cars = [];
   for (let i = 0; i < N; i++) {
     cars.push(
-      new Car(road.getLaneCenter(1), canvas.height * 0.8, 30, 50, false, true)
+      new Car(
+        [road.getLaneCenter(1), 1],
+        canvas.height * 0.8,
+        30,
+        50,
+        false,
+        true
+      )
     );
   }
 }
@@ -66,11 +73,12 @@ function save() {
 
 function discard() {
   GeneticAlgorithm.discardBestBrains();
+  window.location.reload();
 }
 
 animate();
 
-function animate() {
+function animate(time = 0) {
   if (ctx && networkCtx) {
     canvas.height = window.innerHeight;
     networkCanvas.width = window.innerWidth;
@@ -80,10 +88,11 @@ function animate() {
 
     // updating
     for (let i = 0; i < traffic.length; i++) {
-      traffic[i].update(road.borders);
+      traffic[i].update(road);
+      trafficPos = traffic.map((tCar) => tCar.y);
     }
     for (let i = 0; i < N; i++) {
-      cars[i].update(road.borders, traffic);
+      cars[i].update(road, traffic, trafficPos, time);
     }
 
     // getting the car that goes the furtherest
