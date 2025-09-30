@@ -1,7 +1,7 @@
 import { Car } from "./car";
 import { Road } from "./road";
 import { Visualizer } from "./neural-network/visualizer";
-import { GeneticAlgorithm } from "./neural-network/testAlgorithm";
+import { GeneticAlgorithm } from "./neural-network/geneticAlgorithm";
 
 const canvas = document.getElementById("workingCanvas") as HTMLCanvasElement;
 const networkCanvas = document.getElementById(

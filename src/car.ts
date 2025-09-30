@@ -2,7 +2,7 @@ import { Controls } from "./controls";
 import { Sensor } from "./sensor";
 import { NeuralNetwork } from "./neural-network/network.js";
 import { Road, type BorderCoordinates } from "./road.js";
-import { lerp, polyIntersect } from "./utils.js";
+import { polyIntersect } from "./utils.js";
 
 export class Car {
   x: number;
