@@ -1,7 +1,7 @@
 import { Car } from "./car";
 import { Road } from "./road";
 import { Visualizer } from "./neural-network/visualizer";
-import { NeuralNetwork } from "./neural-network/network";
+import { GeneticAlgorithm } from "./neural-network/testAlgorithm";
 
 const canvas = document.getElementById("workingCanvas") as HTMLCanvasElement;
 const networkCanvas = document.getElementById(
@@ -19,20 +19,21 @@ const networkCtx = networkCanvas.getContext("2d");
 const road = new Road(canvas.width / 2, canvas.width * 0.9, 3);
 const traffic = [
   new Car(road.getLaneCenter(1), -200, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(0), -500, 30, 50, true, false, 2),
   new Car(road.getLaneCenter(2), -200, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(0), -800, 30, 50, true, false, 2),
+  new Car(road.getLaneCenter(0), -500, 30, 50, true, false, 2),
   new Car(road.getLaneCenter(2), -600, 30, 50, true, false, 2),
+  new Car(road.getLaneCenter(0), -800, 30, 50, true, false, 2),
   new Car(road.getLaneCenter(1), -800, 30, 50, true, false, 2),
+  new Car(road.getLaneCenter(2), -900, 30, 50, true, false, 2),
   new Car(road.getLaneCenter(0), -1000, 30, 50, true, false, 2),
   new Car(road.getLaneCenter(1), -1000, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(2), -1200, 30, 50, true, false, 2),
-  new Car(road.getLaneCenter(2), -900, 30, 50, true, false, 2),
   new Car(road.getLaneCenter(0), -1200, 30, 50, true, false, 2),
+  new Car(road.getLaneCenter(2), -1200, 30, 50, true, false, 2),
 ];
 
 let cars: Car[] = [];
-const N = 1;
+let bestCars: Car[] = [];
+const N = 100;
 
 function getCars(N: number) {
   cars = [];
@@ -45,17 +46,10 @@ function getCars(N: number) {
 
 getCars(N);
 
-let bestCar: Car = cars[0];
+setTimeout(() => save(), 15000);
 
-if (localStorage.getItem("bestBrain")) {
-  for (let i = 0; i < cars.length; i++) {
-    const brain = JSON.parse(localStorage.getItem("bestBrain") as string);
-    cars[i].brain = brain;
-
-    if (i != 0) {
-      NeuralNetwork.mutate(cars[i].brain as NeuralNetwork, 0.08);
-    }
-  }
+if (localStorage.getItem("bestBrain0")) {
+  GeneticAlgorithm.mutateCars(cars);
 }
 
 const saveBtn = document.getElementById("save") as HTMLElement;
@@ -65,11 +59,13 @@ discardBtn.addEventListener("click", discard);
 
 function save() {
   console.log("saved!!");
-  localStorage.setItem("bestBrain", JSON.stringify(bestCar.brain));
+  cars = GeneticAlgorithm.sortCars(cars);
+  GeneticAlgorithm.findBestCar(cars);
+  window.location.reload();
 }
 
 function discard() {
-  localStorage.removeItem("bestBrain");
+  GeneticAlgorithm.discardBestBrains();
 }
 
 animate();
@@ -91,12 +87,13 @@ function animate() {
     }
 
     // getting the car that goes the furtherest
-    bestCar = cars.find((c) => c.y == Math.min(...cars.map((c) => c.y))) as Car;
+    const bestCar = cars.find(
+      (c) => c.y == Math.min(...cars.map((c) => c.y))
+    ) as Car;
 
     // drawing
     ctx.save();
-    const ty = bestCar ? bestCar : cars[0];
-    ctx.translate(0, -ty.y + canvas.height * 0.8);
+    ctx.translate(0, -bestCar.y + canvas.height * 0.8);
 
     road.draw(ctx);
     for (let i = 0; i < traffic.length; i++) {
@@ -107,12 +104,12 @@ function animate() {
       cars[i].draw(ctx);
     }
     ctx.globalAlpha = 1;
-    bestCar?.draw(ctx, true);
+    bestCar.draw(ctx, true);
 
     ctx.restore();
 
     // visualization ( for neuralNetwork )
-    Visualizer.drawNetwork(networkCtx, ty.brain);
+    Visualizer.drawNetwork(networkCtx, bestCar.brain);
     requestAnimationFrame(animate);
   }
 }
