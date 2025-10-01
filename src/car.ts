@@ -28,6 +28,10 @@ export class Car {
   overTake: number;
   laneChange: number;
   lane: number;
+  minSpeed: number;
+  carSlowed: number;
+  trailing: number;
+  overtakenCars: Set<number>;
 
   constructor(
     xValue: number[],
@@ -59,8 +63,12 @@ export class Car {
     this.overTake = 0;
     this.lane = xValue[1];
     this.laneChange = 0;
+    this.minSpeed = this.maxSpeed - 1.5;
+    this.carSlowed = 0;
+    this.trailing = 0;
+    this.overtakenCars = new Set<number>();
 
-    this.color = !this.dummyCar ? "red" : "blue"; // Initialize color
+    this.color = !this.dummyCar ? "red" : "blue";
 
     if (!this.dummyCar) {
       this.controls = new Controls();
@@ -76,7 +84,7 @@ export class Car {
     };
   }
 
-  update(road: Road, traffic?: Car[], trafficPos?: number[], time?: number) {
+  update(road: Road, traffic?: Car[], trafficPos?: number[][], time?: number) {
     if (!this.damage) {
       if (!this.dummyCar && this.sensor) {
         this.sensor.update(road.borders, traffic);
@@ -95,7 +103,11 @@ export class Car {
             this.controls.reverse = outputs[3] > 0;
           }
         }
-        this.#assessCarBehaviors(trafficPos as number[], time as number, road);
+        this.#assessCarBehaviors(
+          trafficPos as number[][],
+          time as number,
+          road
+        );
       }
       this.#move();
       this.carBorders = this.#getCurrentBorders();
@@ -105,7 +117,7 @@ export class Car {
     }
   }
 
-  #assessCarBehaviors(trafficPos: number[], time: number, road: Road) {
+  #assessCarBehaviors(trafficPos: number[][], time: number, road: Road) {
     this.timeAlive += time;
 
     if (
@@ -125,8 +137,20 @@ export class Car {
     }
 
     for (let i = 0; i < trafficPos.length; i++) {
-      if (this.y > trafficPos[i]) {
+      // Only count overtake once per car
+      if (this.y < trafficPos[i][0] && !this.overtakenCars.has(i)) {
         this.overTake += 1;
+        this.overtakenCars.add(i);
+      }
+
+      const carandTrafficDist = this.y - trafficPos[i][0];
+
+      // Check if trailing behind traffic
+      if (carandTrafficDist > 0 && carandTrafficDist < 80) {
+        if (this.x == trafficPos[i][1]) {
+          this.trailing += 10;
+        }
+        this.trailing += 2;
       }
     }
 
@@ -134,6 +158,12 @@ export class Car {
     if (this.lane !== changedLane) {
       this.laneChange += 1;
       this.lane = changedLane;
+    }
+
+    if (this.timeAlive > 1000) {
+      if (this.speed < this.minSpeed) {
+        this.carSlowed += 1;
+      }
     }
   }
 
@@ -239,7 +269,7 @@ export class Car {
 
   draw(ctx: CanvasRenderingContext2D, drawSensor: boolean = false) {
     if (this.damage) {
-      ctx.fillStyle = "gray";
+      ctx.fillStyle = "white";
     } else {
       ctx.fillStyle = this.color;
     }

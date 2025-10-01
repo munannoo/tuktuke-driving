@@ -31,9 +31,12 @@ const traffic = [
   new Car([road.getLaneCenter(2), 2], -1200, 30, 50, true, false, 2),
 ];
 
-let trafficPos: number[] = [];
+const initaltrafficPos = traffic.map((tCar) => [tCar.x, tCar.y]);
+
+let trafficPos: number[][] = [];
 let cars: Car[] = [];
-const N = 300;
+let timeInterval = 30000;
+const N = 1000;
 
 function getCars(N: number) {
   cars = [];
@@ -53,7 +56,7 @@ function getCars(N: number) {
 
 getCars(N);
 
-setTimeout(() => save(), 15000);
+setInterval(() => save(), timeInterval);
 
 if (localStorage.getItem("bestBrain0")) {
   GeneticAlgorithm.mutateCars(cars);
@@ -66,20 +69,47 @@ discardBtn.addEventListener("click", discard);
 
 function save() {
   console.log("saved!!");
-  cars = GeneticAlgorithm.sortCars(cars);
-  GeneticAlgorithm.findBestCar(cars);
-  window.location.reload();
+  cars = GeneticAlgorithm.sortCars(cars)[0] as Car[];
+  console.log("printing", GeneticAlgorithm.sortCars(cars)[1][0]);
+  GeneticAlgorithm.findBestCar(
+    cars,
+    GeneticAlgorithm.sortCars(cars)[1][0] as number
+  );
+  reset();
+  // window.location.reload();
 }
 
 function discard() {
   GeneticAlgorithm.discardBestBrains();
-  window.location.reload();
+  reset();
+  // window.location.reload();
 }
+
+function reset() {
+  getCars(N);
+
+  if (localStorage.getItem("bestBrain0")) {
+    GeneticAlgorithm.mutateCars(cars);
+  }
+
+  for (let i = 0; i < traffic.length; i++) {
+    traffic[i].y = initaltrafficPos[i][1];
+    traffic[i].x = initaltrafficPos[i][0];
+  }
+
+  // Reset the time tracking
+  lastTime = 0;
+}
+
+let lastTime = 0;
 
 animate();
 
 function animate(time = 0) {
   if (ctx && networkCtx) {
+    const deltaTime = time - lastTime;
+    lastTime = time;
+
     canvas.height = window.innerHeight;
     networkCanvas.width = window.innerWidth;
 
@@ -89,10 +119,10 @@ function animate(time = 0) {
     // updating
     for (let i = 0; i < traffic.length; i++) {
       traffic[i].update(road);
-      trafficPos = traffic.map((tCar) => tCar.y);
+      trafficPos = traffic.map((tCar) => [tCar.y, tCar.x]);
     }
     for (let i = 0; i < N; i++) {
-      cars[i].update(road, traffic, trafficPos, time);
+      cars[i].update(road, traffic, trafficPos, deltaTime);
     }
 
     // getting the car that goes the furtherest

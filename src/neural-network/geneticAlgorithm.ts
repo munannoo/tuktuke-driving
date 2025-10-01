@@ -2,9 +2,13 @@ import { Car } from "../car";
 import { NeuralNetwork } from "./network";
 
 export class GeneticAlgorithm {
-  static generalAmt = 3;
+  static generalAmt = 1;
 
-  static findBestCar(cars: Car[], amount = this.generalAmt) {
+  static findBestCar(
+    cars: Car[],
+    fitnessScore: number,
+    amount = this.generalAmt
+  ) {
     // save the brain to localstorage & return the best cars
     const bestCarsList = cars.slice(0, amount);
     for (let i = 0; i < bestCarsList.length; i++) {
@@ -14,7 +18,7 @@ export class GeneticAlgorithm {
       );
     }
 
-    console.log("updates bestBrains!");
+    console.log("updates bestBrains!", fitnessScore, bestCarsList[0].damage);
     return bestCarsList[0];
   }
 
@@ -28,29 +32,23 @@ export class GeneticAlgorithm {
       );
     }
 
-    // give brain to top cars. give mutated brain to other cars
     for (let i = 0; i < cars.length; i++) {
       if (i < amount) {
-        // Create a deep copy for elite cars too, to prevent reference sharing
         cars[i].brain = JSON.parse(JSON.stringify(bestBrainsArr[i]));
       } else {
-        const randomBrain =
-          bestBrainsArr[Math.floor(Math.random() * bestBrainsArr.length)];
+        cars[i].brain = JSON.parse(JSON.stringify(bestBrainsArr[0]));
 
-        cars[i].brain = JSON.parse(JSON.stringify(randomBrain));
-
-        // Adaptive mutation rates for better diversity
         let mutationRate = 0.08; // Base rate - reduced for better convergence
 
         if (i < cars.length * 0.3) {
           // First 30% after elite - low mutation
-          mutationRate = 0.03;
+          mutationRate = 0.08;
         } else if (i < cars.length * 0.7) {
           // Next 40% - medium mutation
           mutationRate = 0.18;
         } else {
           // Last 30% - high mutation for exploration
-          mutationRate = 0.4;
+          mutationRate = 0.32;
         }
 
         NeuralNetwork.mutate(cars[i].brain as NeuralNetwork, mutationRate);
@@ -63,15 +61,13 @@ export class GeneticAlgorithm {
       return { car: c, fitness: this.#calculateFitness(c) };
     });
 
-    carsFitnessScore.forEach((c) =>
-      console.log("check", c.fitness, c.car.y, c.car.timeAlive / 1000)
-    );
-
-    return carsFitnessScore
+    const sortedCars = carsFitnessScore
       .sort((a, b) => b.fitness - a.fitness)
-      .map((c) => {
-        return c.car;
-      });
+      .map((c) => c.car);
+    const sortedFitnessScore = carsFitnessScore
+      .sort((a, b) => b.fitness - a.fitness)
+      .map((c) => c.fitness);
+    return [sortedCars, sortedFitnessScore];
   }
 
   static discardBestBrains(amount = this.generalAmt) {
@@ -89,18 +85,23 @@ export class GeneticAlgorithm {
     const isCarDamaged = car.damage ? 1 : 0;
     const carLifeSpan = car.timeAlive / 1000;
 
-    let fitness = distCovered; // distance covered
+    let fitness = distCovered * 3;
 
-    // Progress rate reward - penalize stalling
     const progressRate = carLifeSpan > 0 ? distCovered / carLifeSpan : 0;
-    fitness += progressRate * 10; // Reward cars that cover distance efficiently
+    fitness += progressRate * 10; // checks how fast it progresses
 
-    fitness -= isCarDamaged * 30; // Increased crash penalty to prevent road collisions
-    fitness -= car.doubleInputs * 10; // Penalty for conflicting inputs
-    fitness += car.turn * 5; // Minimal turn reward to discourage unnecessary turning
-    fitness += car.overTake * 20; // Higher reward for overtaking
-    fitness += car.laneChange * 10;
+    fitness -= isCarDamaged * 100; // check if car is damaged.
+    fitness -= car.doubleInputs * 10; // penalty for conflicting inputs
+    fitness += car.turn * 10; // motivate cars to take risk instead of trailing behind traffic
+    fitness += car.overTake * 50; // for overtaking (reduced from 1000 to prevent inflation)
+    fitness += car.laneChange * 30; // motivating cars to change initial lanes to avoid trailing.
+    fitness -= car.carSlowed * 20;
+    fitness -= car.trailing * 5; // reduced penalty to not overwhelm other factors
 
     return fitness;
+  }
+
+  static getFitnessScore(givenCar: Car) {
+    return this.#calculateFitness(givenCar);
   }
 }
