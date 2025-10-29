@@ -3,6 +3,34 @@ import { Road } from "./road";
 import { Visualizer } from "./neural-network/visualizer";
 import { GeneticAlgorithm } from "./neural-network/geneticAlgorithm";
 
+// html elements
+const radioChoices = document.getElementById("radio") as HTMLElement;
+const trained = document.getElementById("trained") as HTMLInputElement;
+const train = document.getElementById("train") as HTMLInputElement;
+const startButton = document.getElementById("start");
+
+const changeVisibility = (bool: boolean) => {
+  bool
+    ? (radioChoices.style.display = "block")
+    : (radioChoices.style.display = "none");
+};
+
+train.addEventListener("change", () => {
+  let trainCheck = train.checked;
+
+  if (trainCheck) {
+    changeVisibility(true);
+  }
+});
+
+trained.addEventListener("change", () => {
+  let trainedCheck = trained.checked;
+  if (trainedCheck) {
+    changeVisibility(false);
+  }
+});
+
+// canvas elements
 const canvas = document.getElementById("workingCanvas") as HTMLCanvasElement;
 const networkCanvas = document.getElementById(
   "networkCanvas"
@@ -16,7 +44,11 @@ networkCanvas.height = 700;
 const ctx = canvas.getContext("2d");
 const networkCtx = networkCanvas.getContext("2d");
 
+// game elements
+let trafficPos: number[][] = [];
+let cars: Car[] = [];
 const road = new Road(canvas.width / 2, canvas.width * 0.9, 3);
+
 const traffic = [
   new Car([road.getLaneCenter(1), 1], -200, 30, 50, true, false, 2),
   new Car([road.getLaneCenter(0), 0], -500, 30, 50, true, false, 2),
@@ -33,10 +65,52 @@ const traffic = [
 
 const initaltrafficPos = traffic.map((tCar) => [tCar.x, tCar.y]);
 
-let trafficPos: number[][] = [];
-let cars: Car[] = [];
-let timeInterval = 30000;
-const N = 1000;
+// functions
+function startDriving() {
+  let timeInterval = 30000;
+  let N = 1;
+
+  // Hide the user prompt container
+  const userPrompt = document.getElementById("userPrompt") as HTMLElement;
+  userPrompt.style.display = "none";
+
+  if (train.checked) {
+    // Get the selected radio button value
+    const selectedRadio = document.querySelector(
+      'input[name="N"]:checked'
+    ) as HTMLInputElement;
+
+    if (selectedRadio) {
+      N = parseInt(selectedRadio.value);
+    } else {
+      N = 1000; // default if nothing selected
+    }
+
+    getCars(N);
+
+    setInterval(() => save(), timeInterval);
+
+    if (localStorage.getItem("bestBrain0")) {
+      GeneticAlgorithm.mutateCars(cars);
+    }
+
+    animate();
+  } else if (trained.checked) {
+    getCars(1);
+
+    fetch("/pre-trainedData.json")
+      .then((response) => response.json())
+      .then((data) => {
+        cars[0].brain = data;
+        animate();
+      })
+      .catch((error) => {
+        console.error("Error loading pre-trained data:", error);
+      });
+  }
+}
+
+startButton?.addEventListener("click", startDriving);
 
 function getCars(N: number) {
   cars = [];
@@ -52,14 +126,6 @@ function getCars(N: number) {
       )
     );
   }
-}
-
-getCars(N);
-
-setInterval(() => save(), timeInterval);
-
-if (localStorage.getItem("bestBrain0")) {
-  GeneticAlgorithm.mutateCars(cars);
 }
 
 const saveBtn = document.getElementById("save") as HTMLElement;
@@ -86,6 +152,7 @@ function discard() {
 }
 
 function reset() {
+  let N = train.checked ? 1000 : 1;
   getCars(N);
 
   if (localStorage.getItem("bestBrain0")) {
@@ -103,7 +170,7 @@ function reset() {
 
 let lastTime = 0;
 
-animate();
+// animate();
 
 function animate(time = 0) {
   if (ctx && networkCtx) {
@@ -121,7 +188,7 @@ function animate(time = 0) {
       traffic[i].update(road);
       trafficPos = traffic.map((tCar) => [tCar.y, tCar.x]);
     }
-    for (let i = 0; i < N; i++) {
+    for (let i = 0; i < cars.length; i++) {
       cars[i].update(road, traffic, trafficPos, deltaTime);
     }
 
@@ -139,7 +206,7 @@ function animate(time = 0) {
       traffic[i].draw(ctx);
     }
     ctx.globalAlpha = 0.2;
-    for (let i = 0; i < N; i++) {
+    for (let i = 0; i < cars.length; i++) {
       cars[i].draw(ctx);
     }
     ctx.globalAlpha = 1;

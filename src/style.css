@@ -86,3 +86,47 @@ button:focus-visible {
   background-color: gray;
   padding: 5px;
 }
+
+#userPrompt {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background-color: blue;
+  border: 2px solid red;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  border-radius: 2rem;
+  font-size: 0.8rem;
+}
+
+#radio {
+  display: none;
+  font-weight: bold;
+}
+
+.space {
+  margin-right: 2rem;
+}
+
+.choicesCont {
+  display: flex;
+  gap: 2rem;
+}
+
+.userPrompt::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}

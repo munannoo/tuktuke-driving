@@ -10,6 +10,32 @@
   <body>
     <script type="module" src="/src/main.ts"></script>
 
+    <div id="userPrompt">
+      <div id="demonstrate" class="choicesCont">
+        <input type="radio" name="choice" id="trained" />
+        <h1>Use Trained Data</h1>
+      </div>
+
+      <div id="tryYourOwn" class="choicesCont">
+        <input type="radio" name="choice" id="train" />
+        <h1>Train Your Own!!</h1>
+      </div>
+
+      <div id="radio">
+        <input type="radio" name="N" value="100" id="r1" />
+        <label for="r1">100</label>
+        <span class="space"></span>
+        <input type="radio" name="N" value="500" id="r2" />
+        <label for="r2">500</label>
+        <span class="space"></span>
+        <input type="radio" name="N" value="1000" id="r3" />
+        <label for="r3">1000</label>
+        <span class="space"></span>
+      </div>
+
+      <button id="start">Start</button>
+    </div>
+
     <canvas id="workingCanvas"></canvas>
     <div id="verticalBtn">
       <button id="save">💾</button>
