@@ -53,9 +53,7 @@ const traffic = [
   new Car([road.getLaneCenter(1), 1], -200, 30, 50, true, false, 2),
   new Car([road.getLaneCenter(0), 0], -500, 30, 50, true, false, 2),
   new Car([road.getLaneCenter(2), 2], -500, 30, 50, true, false, 2),
-  new Car([road.getLaneCenter(2), 2], -600, 30, 50, true, false, 2),
   new Car([road.getLaneCenter(0), 0], -800, 30, 50, true, false, 2),
-  new Car([road.getLaneCenter(1), 1], -800, 30, 50, true, false, 2),
   new Car([road.getLaneCenter(2), 2], -900, 30, 50, true, false, 2),
   new Car([road.getLaneCenter(0), 0], -1000, 30, 50, true, false, 2),
   new Car([road.getLaneCenter(1), 1], -1000, 30, 50, true, false, 2),
@@ -129,9 +127,19 @@ function getCars(N: number) {
 }
 
 const saveBtn = document.getElementById("save") as HTMLElement;
-saveBtn.addEventListener("click", save);
+saveBtn.addEventListener("click", saveManual);
 const discardBtn = document.getElementById("discard") as HTMLElement;
 discardBtn.addEventListener("click", discard);
+
+function saveManual() {
+  // Save the currently viewed car (bestCar)
+  if (bestCar && bestCar.brain) {
+    localStorage.setItem("bestBrain0", JSON.stringify(bestCar.brain));
+    console.log("Saved brain from best car");
+  }
+
+  reset();
+}
 
 function save() {
   console.log("saved!!");
@@ -142,7 +150,6 @@ function save() {
     GeneticAlgorithm.sortCars(cars)[1][0] as number
   );
   reset();
-  // window.location.reload();
 }
 
 function discard() {
@@ -169,6 +176,7 @@ function reset() {
 }
 
 let lastTime = 0;
+let bestCar: Car;
 
 // animate();
 
@@ -193,9 +201,7 @@ function animate(time = 0) {
     }
 
     // getting the car that goes the furtherest
-    const bestCar = cars.find(
-      (c) => c.y == Math.min(...cars.map((c) => c.y))
-    ) as Car;
+    bestCar = cars.find((c) => c.y == Math.min(...cars.map((c) => c.y))) as Car;
 
     // drawing
     ctx.save();
